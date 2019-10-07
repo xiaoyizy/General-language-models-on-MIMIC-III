@@ -325,6 +325,51 @@ class SingleClassificationTask(ClassificationTask):
             split, indexers, model_preprocessing_interface, is_pair=False
         )
 
+@register_task("mimic-icd-prediction", rel_path="mimic_icd/")
+class MIMICICDPredictionTask(SingleClassificationTask):
+    def __init__(self, path, max_seq_len, name, **kw):
+        """ """
+        super(MIMICICDPredictionTask, self).__init__(name, n_classes=4000, **kw)
+        self.path = path
+        self.max_seq_len = max_seq_len
+
+        self.train_data_text = None
+        self.val_data_text = None
+        self.test_data_text = None
+
+    def load_data(self):
+        """ Load data """
+        self.train_data_text = load_tsv(
+            self._tokenizer_name,
+            os.path.join(self.path, "train.tsv"),
+            max_seq_len=self.max_seq_len,
+            s1_idx=0,
+            s2_idx=None,
+            label_idx=1,
+            skip_rows=1,
+        )
+        self.val_data_text = load_tsv(
+            self._tokenizer_name,
+            os.path.join(self.path, "dev.tsv"),
+            max_seq_len=self.max_seq_len,
+            s1_idx=0,
+            s2_idx=None,
+            label_idx=1,
+            skip_rows=1,
+        )
+        self.test_data_text = load_tsv(
+            self._tokenizer_name,
+            os.path.join(self.path, "test.tsv"),
+            max_seq_len=self.max_seq_len,
+            s1_idx=1,
+            s2_idx=None,
+            has_labels=False,
+            return_indices=True,
+            skip_rows=1,
+        )
+        self.sentences = self.train_data_text[0] + self.val_data_text[0]
+        log.info("\tFinished loading SST data.")
+
 
 class PairClassificationTask(ClassificationTask):
     """ Generic sentence pair classification """

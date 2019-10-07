@@ -73,6 +73,11 @@ class MosesTokenizer(Tokenizer):
         """
         return [self._detokenizer.unescape_xml(t) for t in tokens]
 
+class SciSpacyTokenizer(Tokenizer):
+    def __init__(self):
+        super().__init__()
+        
+    def tokenize(self, sequence):
 
 @functools.lru_cache(maxsize=8, typed=False)
 def get_tokenizer(tokenizer_name):
