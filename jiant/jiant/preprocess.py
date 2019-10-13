@@ -40,6 +40,7 @@ from pytorch_transformers import (
     TransfoXLTokenizer,
     XLMTokenizer,
 )
+from jiant.utils.tokenizers import SciSpacyTokenizer
 
 from jiant.tasks import (
     ALL_DIAGNOSTICS,
@@ -246,7 +247,6 @@ def _build_vocab(args, tasks, vocab_path: str):
     if input_module_uses_pytorch_transformers(args.input_module):
         # Add pre-computed vocabulary of corresponding tokenizer for pytorch_transformers models.
         add_pytorch_transformers_vocab(vocab, args.tokenizer)
-    import pdb; pdb.set_trace()
     vocab.save_to_files(vocab_path)
     log.info("\tSaved vocab to %s", vocab_path)
     #  del word2freq, char2freq, target2freq
@@ -515,15 +515,15 @@ def get_words(tasks):
 
 def get_vocab(word2freq, char2freq, max_v_sizes):
     """Build vocabulary by selecting the most frequent tokens"""
-    vocab = Vocabulary(counter=None, max_vocab_size=max_v_sizes)
+    vocab = Vocabulary(counter=None, max_vocab_size=max_v_sizes, pretrained_files="/beegfs/yp913/jiant_cleanup/cilnicalBERT/vocab.txt")
+    vocab.set_from_file(filename="/beegfs/yp913/jiant_cleanup/clinicalBERT/vocab.txt", is_padded=1, namespace="scispacy", oov_token="[UNK]")
+    vocab._oov_token = "[UNK]"
     for special in SPECIALS:
-        vocab.add_token_to_namespace(special, "tokens")
-
+        vocab.add_token_to_namespace(special, "scispacy")
     words_by_freq = [(word, freq) for word, freq in word2freq.items()]
     words_by_freq.sort(key=lambda x: x[1], reverse=True)
     for word, _ in words_by_freq[: max_v_sizes["word"]]:
-        vocab.add_token_to_namespace(word, "tokens")
-
+        vocab.add_token_to_namespace(word, "scispacy")
     chars_by_freq = [(char, freq) for char, freq in char2freq.items()]
     chars_by_freq.sort(key=lambda x: x[1], reverse=True)
     for char, _ in chars_by_freq[: max_v_sizes["char"]]:
@@ -574,6 +574,8 @@ def add_pytorch_transformers_vocab(vocab, tokenizer_name):
     anything special, so we can just use the standard indexers.
     """
     do_lower_case = "uncased" in tokenizer_name
+    if tokenizer_name.startswith("sci"):
+        tokenizer = SciSpacyTokenizer()
     if tokenizer_name.startswith("bert-"):
         tokenizer = BertTokenizer.from_pretrained(tokenizer_name, do_lower_case=do_lower_case)
     elif tokenizer_name.startswith("roberta-"):
@@ -600,7 +602,6 @@ def add_pytorch_transformers_vocab(vocab, tokenizer_name):
     # TODO: this is another place can be simplified by "model-before-preprocess" reorganization
     # we can pass tokenizer created in model here, see issue <TBD>
 
-    vocab_size = len(tokenizer)
     # do not use tokenizer.vocab_size, it does not include newly added token
     if tokenizer_name.startswith("roberta-"):
         if tokenizer.convert_ids_to_tokens(vocab_size - 1) is None:
@@ -609,8 +610,9 @@ def add_pytorch_transformers_vocab(vocab, tokenizer_name):
             log.info("Time to delete vocab_size-1 in preprocess.py !!!")
     # due to a quirk in huggingface's file, the last token of RobertaTokenizer is None, remove
     # this when they fix the problem
-
-    ordered_vocab = tokenizer.convert_ids_to_tokens(range(vocab_size))
+    ordered_vocab = ["[CLS]", "[SEP]", "[PAD]", "[UNK]"]
+    if tokenizer_name != "scispacy":
+        ordered_vocab = tokenizer.convert_ids_to_tokens(range(vocab_size))
     log.info("Added pytorch_transformers vocab (%s): %d tokens", tokenizer_name, len(ordered_vocab))
     for word in ordered_vocab:
         vocab.add_token_to_namespace(word, input_module_tokenizer_name(tokenizer_name))
