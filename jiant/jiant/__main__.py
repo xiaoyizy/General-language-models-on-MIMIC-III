@@ -518,7 +518,12 @@ def main(cl_arguments):
     # Build model
     log.info("Building model...")
     start_time = time.time()
+    args.sep_id = vocab.get_token_index("[SEP]", "scispacy")
+    args.cls_id = vocab.get_token_index("[CLS]", "scispacy")
+    args.unk_id = vocab.get_token_index("[UNK]", "scispacy")
+    args.pad_id = vocab.get_token_index("[PAD]", "scispacy")
     model = build_model(args, vocab, word_embs, tasks, cuda_device)
+    model.sent_encoder._text_field_embedder.model.resize_token_embeddings(len(vocab.get_index_to_token_vocabulary("scispacy")) + model.sent_encoder._text_field_embedder.model.embeddings.word_embeddings.num_embeddings) 
     log.info("Finished building model in %.3fs", time.time() - start_time)
 
     # Start Tensorboard if requested
@@ -611,8 +616,8 @@ def main(cl_arguments):
             task_params = get_model_attribute(model, "_get_task_params", uses_cuda(cuda_device))
             task_to_use = task_params(task.name).get("use_classifier", task.name)
             ckpt_path = get_best_checkpoint_path(args, "eval", task_to_use)
-            #assert ckpt_path is not None
-            #load_model_state(model, ckpt_path, cuda_device, skip_task_models=[], strict=strict)
+            assert ckpt_path is not None
+            load_model_state(model, ckpt_path, cuda_device, skip_task_models=[], strict=strict)
             evaluate_and_write(args, model, [task], "test", cuda_device)
 
     if args.delete_checkpoints_when_done and not args.keep_all_checkpoints:
