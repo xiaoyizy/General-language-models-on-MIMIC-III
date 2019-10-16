@@ -250,22 +250,27 @@ class BertEmbedderModule(PytorchTransformersEmbedderModule):
 
     def __init__(self, args):
         super(BertEmbedderModule, self).__init__(args)
-        input_module = "bert-base-cased" if args.input_module == "clinicalBERT" else "clinicalBERT"
+        input_module = "bert-base-cased" if args.input_module == "clinicalBERT" else args.input_module
         if args.input_module == "clinicalBERT":
             self.model = pytorch_transformers.BertModel.from_pretrained("/beegfs/yp913/jiant_cleanup/clinicalBERT", output_hidden_states=True)
+            self._sep_id = args.sep_id
+            self._cls_id = args.cls_id
+            self._pad_id = args.pad_id
+            self._unk_id = args.unk_id
         else:
             self.model = pytorch_transformers.BertModel.from_pretrained(
                 input_module, cache_dir=self.cache_dir, output_hidden_states=True
             )
+            self._sep_id = self.tokenizer.convert_tokens_to_ids("[SEP]")
+            self._cls_id = self.tokenizer.convert_tokens_to_ids("[CLS]")
+            self._pad_id = self.tokenizer.convert_tokens_to_ids("[PAD]")
+            self._pad_id = self.tokenizer.convert_tokens_to_ids("[UNK]")
         self.max_pos = self.model.config.max_position_embeddings
         self.tokenizer = args.tokenizer
-        self.tokenizer = pytorch_transformers.BertTokenizer.from_pretrained(
-            input_module, cache_dir=self.cache_dir, do_lower_case="uncased" in args.tokenizer
-        )  # TODO: Speed things up slightly by reusing the previously-loaded tokenizer.
-        self._sep_id = args.sep_id 
-        self._cls_id = args.cls_id
-        self._pad_id = args.pad_id
-        self._unk_id = args.unk_id
+        if args.input_module != "clinicalBERT":
+            self.tokenizer = pytorch_transformers.BertTokenizer.from_pretrained(
+                input_module, cache_dir=self.cache_dir, do_lower_case="uncased" in args.tokenizer
+            )  # TODO: Speed things up slightly by reusing the previously-loaded tokenizer.
 
         self.parameter_setup(args)
 
@@ -278,7 +283,13 @@ class BertEmbedderModule(PytorchTransformersEmbedderModule):
             return ["[CLS]"] + s1 + ["[SEP]"]
 
     def forward(self, sent: Dict[str, torch.LongTensor], task_name: str = "") -> torch.FloatTensor:
-        ids, input_mask = self.correct_sent_indexing(sent)
+        if self.tokenizer == "scispacy":
+            ids = sent["scispacy"]
+            input_mask = (ids != 0).long()
+            ids[ids == 0] = self._pad_id # _pad_id is still pushed up by 1 becuse @@PADDING@@ is index 0.
+            ids -= 1 # beuase vocab sets @@PADDING@@ to index 0. 
+        else:
+            ids, input_mask = self.correct_sent_indexing(sent)
         hidden_states, lex_seq = [], None
         if self.output_mode not in ["none", "top"]:
             lex_seq = self.model.embeddings.word_embeddings(ids)
@@ -288,6 +299,7 @@ class BertEmbedderModule(PytorchTransformersEmbedderModule):
             _, output_pooled_vec, hidden_states = self.model(
                 ids, token_type_ids=token_types, attention_mask=input_mask            )
         return self.prepare_output(lex_seq, hidden_states, input_mask)
+
 
     def get_pretrained_lm_head(self):
         model_with_lm_head = pytorch_transformers.BertForMaskedLM.from_pretrained(
