@@ -513,17 +513,18 @@ def get_words(tasks):
     return word2freq, char2freq
 
 
-def get_vocab(word2freq, char2freq, max_v_sizes):
+def get_vocab(word2freq, char2freq, max_v_sizes, tokenizzer):
     """Build vocabulary by selecting the most frequent tokens"""
     vocab = Vocabulary(counter=None, max_vocab_size=max_v_sizes, pretrained_files="/beegfs/yp913/jiant_cleanup/cilnicalBERT/vocab.txt")
-    vocab.set_from_file(filename="/beegfs/yp913/jiant_cleanup/clinicalBERT/vocab.txt", is_padded=1, namespace="scispacy", oov_token="[UNK]")
-    vocab._oov_token = "[UNK]"
+    if tokenizer == "scispacy":
+        vocab.set_from_file(filename="/beegfs/yp913/jiant_cleanup/clinicalBERT/vocab.txt", is_padded=1, namespace="scispacy", oov_token="[UNK]")
+        vocab._oov_token = "[UNK]"
     for special in SPECIALS:
-        vocab.add_token_to_namespace(special, "scispacy")
+        vocab.add_token_to_namespace(special, "scispacy" if tokenizer == "scispacy" else "tokens")
     words_by_freq = [(word, freq) for word, freq in word2freq.items()]
     words_by_freq.sort(key=lambda x: x[1], reverse=True)
     for word, _ in words_by_freq[: max_v_sizes["word"]]:
-        vocab.add_token_to_namespace(word, "scispacy")
+        vocab.add_token_to_namespace(special, "scispacy" if tokenizer == "scispacy" else "tokens")
     chars_by_freq = [(char, freq) for char, freq in char2freq.items()]
     chars_by_freq.sort(key=lambda x: x[1], reverse=True)
     for char, _ in chars_by_freq[: max_v_sizes["char"]]:
