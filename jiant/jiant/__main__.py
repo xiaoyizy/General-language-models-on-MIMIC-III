@@ -523,7 +523,8 @@ def main(cl_arguments):
     args.unk_id = vocab.get_token_index("[UNK]", "scispacy")
     args.pad_id = vocab.get_token_index("[PAD]", "scispacy")
     model = build_model(args, vocab, word_embs, tasks, cuda_device)
-    model.sent_encoder._text_field_embedder.model.resize_token_embeddings(len(vocab.get_index_to_token_vocabulary("scispacy")) - 1 + model.sent_encoder._text_field_embedder.model.embeddings.word_embeddings.num_embeddings) 
+    if args.input_module == "clinicalBERT":
+        model.sent_encoder._text_field_embedder.model.resize_token_embeddings(len(vocab.get_index_to_token_vocabulary("scispacy")) - 1 + model.sent_encoder._text_field_embedder.model.embeddings.word_embeddings.num_embeddings) 
     log.info("Finished building model in %.3fs", time.time() - start_time)
 
     # Start Tensorboard if requested

@@ -93,6 +93,7 @@ def load_tsv(
     filter_value=None,
     tag_vocab=None,
     tag2idx_dict=None,
+    header=None,
 ):
     """
     Load a tsv.
@@ -140,13 +141,12 @@ def load_tsv(
         data_file,
         sep=delimiter,
         error_bad_lines=False,
-        header=None,
+        header=header,
         skiprows=skip_rows,
         quoting=quote_level,
         keep_default_na=False,
         encoding="utf-8",
     )
-
     if filter_idx and filter_value:
         rows = rows[rows[filter_idx] == filter_value]
     # Filter for sentence1s that are of length 0
