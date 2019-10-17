@@ -126,7 +126,7 @@ def process_single_pair_task_split(
                 d["sent2_str"] = MetadataField(" ".join(input2))
         if classification:
             d["labels"] =  MultiLabelField(
-                labels.split(","), label_namespace="tags",  num_labels=907
+                labels.split(","), label_namespace="tags",  num_labels=280
             )
 
         else:
@@ -332,11 +332,11 @@ class SingleClassificationTask(ClassificationTask):
 @register_task("icd_prediction", rel_path="mimic/")
 class MIMICICDPredictionTask(SingleClassificationTask):
     def __init__(self, path, max_seq_len, name, **kw):  
-        super(MIMICICDPredictionTask, self).__init__(name, n_classes=907, **kw)
+        super(MIMICICDPredictionTask, self).__init__(name, n_classes=280, **kw)
         self.path = path
         self.name = name
         self.max_seq_len = max_seq_len
-        self.labels = None
+        self.labels = pd.read_json("/beegfs/yp913/General-language-models-on-MIMIC-III/jiant/jiant/tasks/ccs_values.json")["ccs"].tolist().pop(110)
         self.train_data_text = None
         self.scorer1 = BooleanAccuracy() 
         self.scorers = [self.scorer1]
