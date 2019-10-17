@@ -230,7 +230,7 @@ def _build_embeddings(args, vocab, emb_file: str):
     return embeddings
 
 
-def _build_vocab(args, tasks, vocab_path: str):
+def _build_vocab(args, tasks, tokenizer, vocab_path: str,):
     """ Build vocabulary from scratch, reading data from tasks. """
     # NOTE: task-specific target vocabulary should be counted in the task object
     # and provided via `task.all_labels()`. The namespace should be task-specific,
@@ -238,7 +238,7 @@ def _build_vocab(args, tasks, vocab_path: str):
     log.info("\tBuilding vocab from scratch.")
     max_v_sizes = {"word": args.max_word_v_size, "char": args.max_char_v_size}
     word2freq, char2freq = get_words(tasks)
-    vocab = get_vocab(word2freq, char2freq, max_v_sizes)
+    vocab = get_vocab(word2freq, char2freq, max_v_sizes, tokenizer)
     for task in tasks:  # add custom label namespaces
         add_task_label_vocab(vocab, task)
     if args.force_include_wsj_vocabulary:
@@ -306,7 +306,7 @@ def build_tasks(args):
 
     vocab_path = os.path.join(args.exp_dir, "vocab")
     if args.reload_vocab or not os.path.exists(vocab_path):
-        _build_vocab(args, tasks, vocab_path)
+        _build_vocab(args, tasks, args.tokenizer, vocab_path)
 
     # Always load vocab from file.
     vocab = Vocabulary.from_files(vocab_path)
@@ -513,7 +513,7 @@ def get_words(tasks):
     return word2freq, char2freq
 
 
-def get_vocab(word2freq, char2freq, max_v_sizes, tokenizzer):
+def get_vocab(word2freq, char2freq, max_v_sizes, tokenizer):
     """Build vocabulary by selecting the most frequent tokens"""
     vocab = Vocabulary(counter=None, max_vocab_size=max_v_sizes, pretrained_files="/beegfs/yp913/jiant_cleanup/cilnicalBERT/vocab.txt")
     if tokenizer == "scispacy":
