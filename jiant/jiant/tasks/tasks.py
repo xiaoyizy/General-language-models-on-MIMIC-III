@@ -8,7 +8,10 @@ from typing import Any, Dict, Iterable, List, Sequence, Type
 import numpy as np
 import pandas as pd
 import torch
+<<<<<<< HEAD
 import pickle
+=======
+>>>>>>> 235f61b41fbd808db4c83d499372b2595d69337f
 
 
 # Fields for instance processing
@@ -40,10 +43,14 @@ from jiant.utils.data_loaders import (
 from jiant.utils.tokenizers import get_tokenizer
 from jiant.tasks.registry import register_task  # global task registry
 from jiant.metrics.winogender_metrics import GenderParity
+<<<<<<< HEAD
 from jiant.metrics.IgniteF1 import IgniteMacroF1
 # from jiant.metrics.icd_prediction_evaluation import macro_accuracy
 
 from ignite.metrics import Precision, Recall
+=======
+from jiant.metrics.icd_prediction_evaluation import macro_accuracy
+>>>>>>> 235f61b41fbd808db4c83d499372b2595d69337f
 
 """Define the tasks and code for loading their data.
 
@@ -130,7 +137,11 @@ def process_single_pair_task_split(
                 d["sent2_str"] = MetadataField(" ".join(input2))
         if classification:
             d["labels"] =  MultiLabelField(
+<<<<<<< HEAD
                 labels.split(","), label_namespace="tags",  num_labels=283
+=======
+                labels.split(","), label_namespace="tags",  num_labels=280
+>>>>>>> 235f61b41fbd808db4c83d499372b2595d69337f
             )
 
         else:
@@ -146,10 +157,16 @@ def process_single_pair_task_split(
     if len(split) < 4:  # counting iterator for idx
         assert len(split) == 3
         split.append(itertools.count())
+<<<<<<< HEAD
         #import pdb; pdb.set_trace()
     # Map over columns: input1, (input2), labels, idx
     instances = map(_make_instance, *split)
 #     import pdb; pdb.set_trace()
+=======
+
+    # Map over columns: input1, (input2), labels, idx
+    instances = map(_make_instance, *split)
+>>>>>>> 235f61b41fbd808db4c83d499372b2595d69337f
     return instances  # lazy iterator
 
 
@@ -333,6 +350,7 @@ class SingleClassificationTask(ClassificationTask):
         return process_single_pair_task_split(
             split, indexers, model_preprocessing_interface, is_pair=False
         )
+<<<<<<< HEAD
     
 @register_task("icd_prediction", rel_path="mimic/")
 class MIMICICDPredictionTask(SingleClassificationTask):
@@ -345,17 +363,37 @@ class MIMICICDPredictionTask(SingleClassificationTask):
         self.labels = np.arange(283)
         self.train_data_text = None
         self.scorer1 = IgniteMacroF1()
+=======
+
+@register_task("icd_prediction", rel_path="mimic/")
+class MIMICICDPredictionTask(SingleClassificationTask):
+    def __init__(self, path, max_seq_len, name, **kw):  
+        super(MIMICICDPredictionTask, self).__init__(name, n_classes=280, **kw)
+        self.path = path
+        self.name = name
+        self.max_seq_len = max_seq_len
+        self.labels = pd.read_json("/beegfs/yp913/General-language-models-on-MIMIC-III/jiant/jiant/tasks/ccs_values.json")["ccs"].tolist().pop(110)
+        self.train_data_text = None
+        self.scorer1 = BooleanAccuracy() 
+>>>>>>> 235f61b41fbd808db4c83d499372b2595d69337f
         self.scorers = [self.scorer1]
         self.val_data_text = None
         self.test_data_text = None
         self._label_namespace = "tags"
         self.current_score = 0
+<<<<<<< HEAD
         self.val_metric = "%s_MacroF1" % self.name
+=======
+>>>>>>> 235f61b41fbd808db4c83d499372b2595d69337f
 
     def get_all_labels(self):
         return self.labels
     def get_metrics(self, reset=False):
+<<<<<<< HEAD
         return {"MacroF1": self.scorer1.get_metric(reset=reset)}
+=======
+        return {"accuracy": self.scorer1.get_metric(reset=reset)}
+>>>>>>> 235f61b41fbd808db4c83d499372b2595d69337f
     def load_data(self):
         """ Load data """
         self.train_data_text = load_tsv(
@@ -367,7 +405,11 @@ class MIMICICDPredictionTask(SingleClassificationTask):
             quote_level=1,
             delimiter=",",
             header=0,
+<<<<<<< HEAD
             label_idx="CCS",
+=======
+            label_idx='ICD9_CODE',
+>>>>>>> 235f61b41fbd808db4c83d499372b2595d69337f
             skip_rows=0,
         )
         
@@ -380,7 +422,11 @@ class MIMICICDPredictionTask(SingleClassificationTask):
             quote_level=1,
             delimiter=",",
             header=0,
+<<<<<<< HEAD
             label_idx="CCS",
+=======
+            label_idx='ICD9_CODE',
+>>>>>>> 235f61b41fbd808db4c83d499372b2595d69337f
             skip_rows=0,
         )
         self.test_data_text = load_tsv(
@@ -392,10 +438,16 @@ class MIMICICDPredictionTask(SingleClassificationTask):
             quote_level=1,
             delimiter=",",
             header=0,
+<<<<<<< HEAD
             label_idx="CCS",
             skip_rows=0,
         )
         #import pdb; pdb.set_trace()
+=======
+            label_idx='ICD9_CODE',
+            skip_rows=0,
+        )
+>>>>>>> 235f61b41fbd808db4c83d499372b2595d69337f
         self.sentences = self.train_data_text[0] + self.val_data_text[0]
         hey_train = [x.split(",") for x in self.train_data_text[2]]
         hey_train = [x for y in hey_train for x in y]

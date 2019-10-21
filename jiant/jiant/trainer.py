@@ -316,9 +316,13 @@ class SamplingMultiTaskTrainer:
                 os.mkdir(os.path.join(self._serialization_dir, task.name))
 
             # Adding task-specific smart iterator to speed up training
+<<<<<<< HEAD
             instance = list([i for i in itertools.islice(task.train_data, 1)])[0]
             log.info('###################################################')
 #             log.info('INSTANCE: {}'.format(instance.texts()))
+=======
+            instance = [i for i in itertools.islice(task.train_data, 1)][0]
+>>>>>>> 235f61b41fbd808db4c83d499372b2595d69337f
             pad_dict = instance.get_padding_lengths()
             sorting_keys = []
             for field in pad_dict:
@@ -593,7 +597,11 @@ class SamplingMultiTaskTrainer:
             total_batches_trained = task_info["total_batches_trained"]
             n_batches_since_val = task_info["n_batches_since_val"]
             tr_loss = task_info["loss"]
+<<<<<<< HEAD
             #import pdb; pdb.set_trace()
+=======
+
+>>>>>>> 235f61b41fbd808db4c83d499372b2595d69337f
             for batch in itertools.islice(tr_generator, 1):
                 n_batches_since_val += 1
                 total_batches_trained += 1
