@@ -21,7 +21,7 @@ from pytorch_transformers import (
     XLMTokenizer,
 )
 import spacy
-nlp = spacy.load("en_core_sci_md")
+# nlp = spacy.load("en_core_sci_md")
 
 class Tokenizer(object):
     def tokenize(self, sentence):
@@ -106,6 +106,7 @@ def get_tokenizer(tokenizer_name):
     elif tokenizer_name == "SplitChars":
         tokenizer = SplitCharsTokenizer()
     elif tokenizer_name == "scispacy":
+        nlp = spacy.load("en_core_sci_md")
         tokenizer = SciSpacyTokenizer()
     elif tokenizer_name == "":
         tokenizer = SpaceTokenizer()

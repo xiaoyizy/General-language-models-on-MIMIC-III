@@ -660,7 +660,7 @@ def build_single_sentence_module(task, d_inp: int, project_before_pooling: bool,
         pool_type=params["pool_type"],
     )
     d_out = params["d_proj"] if project_before_pooling else d_inp
-    classifier = Classifier.from_params(d_out, 907, params)
+    classifier = Classifier.from_params(d_out, 283, params)
     module = SingleClassifier(pooler, classifier)
     return module
 
@@ -902,7 +902,8 @@ class MultiTaskModel(nn.Module):
                 out["loss"] = format_output(F.cross_entropy(logits, labels), self._cuda_device)
             tagmask = batch.get("tagmask", None)
             binary_preds = logits.ge(0).long()  # {0,1}
-            task.scorer1(binary_preds.view((labels.shape[0] * labels.shape[1])), labels.view((labels.shape[0] * labels.shape[1])))
+#             import pdb; pdb.set_trace()
+            task.scorer1(binary_preds, labels)
 
         if predict:
             if isinstance(task, RegressionTask):
@@ -914,7 +915,7 @@ class MultiTaskModel(nn.Module):
                 out["preds"] = logits
             else:
                 binary_preds = logits.ge(0).long() 
-                binary_preds = binary_preds.view((binary_preds.shape[0] * binary_preds.shape[1]))
+#                 binary_preds = binary_preds.view((binary_preds.shape[0] * binary_preds.shape[1]))
                 out["preds"] = binary_preds
         #how to get the 
         return out

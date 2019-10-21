@@ -8,6 +8,7 @@ from typing import Any, Dict, Iterable, List, Sequence, Type
 import numpy as np
 import pandas as pd
 import torch
+import pickle
 
 
 # Fields for instance processing
@@ -39,7 +40,10 @@ from jiant.utils.data_loaders import (
 from jiant.utils.tokenizers import get_tokenizer
 from jiant.tasks.registry import register_task  # global task registry
 from jiant.metrics.winogender_metrics import GenderParity
-from jiant.metrics.icd_prediction_evaluation import macro_accuracy
+from jiant.metrics.IgniteF1 import IgniteMacroF1
+# from jiant.metrics.icd_prediction_evaluation import macro_accuracy
+
+from ignite.metrics import Precision, Recall
 
 """Define the tasks and code for loading their data.
 
@@ -126,7 +130,7 @@ def process_single_pair_task_split(
                 d["sent2_str"] = MetadataField(" ".join(input2))
         if classification:
             d["labels"] =  MultiLabelField(
-                labels.split(","), label_namespace="tags",  num_labels=280
+                labels.split(","), label_namespace="tags",  num_labels=283
             )
 
         else:
@@ -142,9 +146,10 @@ def process_single_pair_task_split(
     if len(split) < 4:  # counting iterator for idx
         assert len(split) == 3
         split.append(itertools.count())
-
+        #import pdb; pdb.set_trace()
     # Map over columns: input1, (input2), labels, idx
     instances = map(_make_instance, *split)
+#     import pdb; pdb.set_trace()
     return instances  # lazy iterator
 
 
@@ -328,27 +333,29 @@ class SingleClassificationTask(ClassificationTask):
         return process_single_pair_task_split(
             split, indexers, model_preprocessing_interface, is_pair=False
         )
-
+    
 @register_task("icd_prediction", rel_path="mimic/")
 class MIMICICDPredictionTask(SingleClassificationTask):
     def __init__(self, path, max_seq_len, name, **kw):  
-        super(MIMICICDPredictionTask, self).__init__(name, n_classes=280, **kw)
+        super(MIMICICDPredictionTask, self).__init__(name, n_classes=283, **kw)
         self.path = path
         self.name = name
         self.max_seq_len = max_seq_len
-        self.labels = pd.read_json("/beegfs/yp913/General-language-models-on-MIMIC-III/jiant/jiant/tasks/ccs_values.json")["ccs"].tolist().pop(110)
+#         self.labels = list(pickle.load(open('/scratch/xz2448/General-language-models-on-MIMIC-III/jiant/jiant/tasks/code2class.p', 'rb')))
+        self.labels = np.arange(283)
         self.train_data_text = None
-        self.scorer1 = BooleanAccuracy() 
+        self.scorer1 = IgniteMacroF1()
         self.scorers = [self.scorer1]
         self.val_data_text = None
         self.test_data_text = None
         self._label_namespace = "tags"
         self.current_score = 0
+        self.val_metric = "%s_MacroF1" % self.name
 
     def get_all_labels(self):
         return self.labels
     def get_metrics(self, reset=False):
-        return {"accuracy": self.scorer1.get_metric(reset=reset)}
+        return {"MacroF1": self.scorer1.get_metric(reset=reset)}
     def load_data(self):
         """ Load data """
         self.train_data_text = load_tsv(
@@ -360,7 +367,7 @@ class MIMICICDPredictionTask(SingleClassificationTask):
             quote_level=1,
             delimiter=",",
             header=0,
-            label_idx='ICD9_CODE',
+            label_idx="CCS",
             skip_rows=0,
         )
         
@@ -373,7 +380,7 @@ class MIMICICDPredictionTask(SingleClassificationTask):
             quote_level=1,
             delimiter=",",
             header=0,
-            label_idx='ICD9_CODE',
+            label_idx="CCS",
             skip_rows=0,
         )
         self.test_data_text = load_tsv(
@@ -385,9 +392,10 @@ class MIMICICDPredictionTask(SingleClassificationTask):
             quote_level=1,
             delimiter=",",
             header=0,
-            label_idx='ICD9_CODE',
+            label_idx="CCS",
             skip_rows=0,
         )
+        #import pdb; pdb.set_trace()
         self.sentences = self.train_data_text[0] + self.val_data_text[0]
         hey_train = [x.split(",") for x in self.train_data_text[2]]
         hey_train = [x for y in hey_train for x in y]

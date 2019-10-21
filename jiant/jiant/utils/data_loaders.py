@@ -147,6 +147,7 @@ def load_tsv(
         keep_default_na=False,
         encoding="utf-8",
     )
+    #import pdb; pdb.set_trace()
     if filter_idx and filter_value:
         rows = rows[rows[filter_idx] == filter_value]
     # Filter for sentence1s that are of length 0
@@ -303,9 +304,13 @@ def tokenize_and_truncate(tokenizer_name, sent, max_seq_len):
     """Truncate and tokenize a sentence or paragraph."""
     max_seq_len -= 2  # For boundary tokens.
     tokenizer = get_tokenizer(tokenizer_name)
-
-    if isinstance(sent, str):
-        return tokenizer.tokenize(sent)[:max_seq_len]
-    elif isinstance(sent, list):
-        assert isinstance(sent[0], str), "Invalid sentence found!"
-        return sent[:max_seq_len]
+    try:
+        if isinstance(sent, str):
+            return tokenizer.tokenize(sent)[:max_seq_len]
+        elif isinstance(sent, list):
+            assert isinstance(sent[0], str), "Invalid sentence found!"
+            return sent[:max_seq_len]
+    except:
+        print('$$$$$$$$$$$$$$$$$')
+        print(sent)
+        0/0
