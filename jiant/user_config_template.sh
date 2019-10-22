@@ -36,6 +36,6 @@ export JIANT_DATA_DIR=/scratch/xz2448/General-language-models-on-MIMIC-III/jiant
 # files with a line like:
 #     word_embs_file = ${FASTTEXT_WORD_EMBS_FILE}
 export WORD_EMBS_FILE=None
-
+########################################
 # Optional:
 # echo "Loaded custom config."
