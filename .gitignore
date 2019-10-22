@@ -1,3 +1,4 @@
 jiant/data/
 *.th
 jiant/user_config_template.sh
+jiant/mimic/
