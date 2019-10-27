@@ -126,7 +126,7 @@ def process_single_pair_task_split(
                 d["sent2_str"] = MetadataField(" ".join(input2))
         if classification:
             d["labels"] =  MultiLabelField(
-                labels.split(","), label_namespace="tags",  num_labels=280
+                labels.split(","), label_namespace="tags",  num_labels=12963
             )
 
         else:
@@ -328,6 +328,78 @@ class SingleClassificationTask(ClassificationTask):
         return process_single_pair_task_split(
             split, indexers, model_preprocessing_interface, is_pair=False
         )
+
+@register_task("icd_prediction_full", rel_path="mimic/")
+class MIMICICDPredictionFullTask(SingleClassificationTask):
+    def __init__(self, path, max_seq_len, name, **kw):  
+        super(MIMICICDPredictionFullTask, self).__init__(name, n_classes=12963, **kw)
+        self.path = path
+        self.name = name
+        self.max_seq_len = max_seq_len
+#         self.labels = list(pickle.load(open('/scratch/xz2448/General-language-models-on-MIMIC-III/jiant/jiant/tasks/code2class.p', 'rb')))
+        self.train_data_text = None
+        self.scorer1 = IgniteMacroF1()
+        self.scorers = [self.scorer1]
+        self.val_data_text = None
+        self.test_data_text = None
+        self._label_namespace = "tags"
+        self.current_score = 0
+        self.val_metric = "%s_MacroF1" % self.name
+
+    def get_all_labels(self):
+        return self.labels
+    def get_metrics(self, reset=False):
+        return {"MacroF1": self.scorer1.get_metric(reset=reset)}
+    def load_data(self):
+        """ Load data """
+        self.train_data_text = load_tsv(
+            self._tokenizer_name,
+            os.path.join(self.path, "mimic_train.csv"),
+            max_seq_len=self.max_seq_len,
+            s1_idx='TEXT',
+            s2_idx=None,
+            quote_level=1,
+            delimiter=",",
+            header=0,
+            label_idx="ICD9_CODE",
+            skip_rows=0,
+        )
+        
+        self.val_data_text = load_tsv(
+            self._tokenizer_name,
+            os.path.join(self.path, "mimic_val.csv"),
+            max_seq_len=self.max_seq_len,
+            s1_idx='TEXT',
+            s2_idx=None,
+            quote_level=1,
+            delimiter=",",
+            header=0,
+            label_idx="ICD9_CODE",
+            skip_rows=0,
+        )
+        self.test_data_text = load_tsv(
+            self._tokenizer_name,
+            os.path.join(self.path, "mimic_test.csv"),
+            max_seq_len=self.max_seq_len,
+            s1_idx='TEXT',
+            s2_idx=None,
+            quote_level=1,
+            delimiter=",",
+            header=0,
+            label_idx="ICD9_CODE",
+            skip_rows=0,
+        )
+        #import pdb; pdb.set_trace()
+        self.sentences = self.train_data_text[0] + self.val_data_text[0]
+        hey_train = [x.split(",") for x in self.train_data_text[2]]
+        hey_train = [x for y in hey_train for x in y]
+        hey_val = [x.split(",") for x in self.val_data_text[2]]
+        hey_val = [x for y in hey_val for x in y]
+        hey_test = [x.split(",") for x in self.test_data_text[2]]
+        hey_test = [x for y in hey_test for x in y]
+        # hey_train, and now we're here. 
+        self.labels = list(set(hey_train)) + list(set(hey_val)) + list(set(hey_test))
+        log.info("\t Done with MIMIC")
 
 @register_task("icd_prediction", rel_path="mimic/")
 class MIMICICDPredictionTask(SingleClassificationTask):
