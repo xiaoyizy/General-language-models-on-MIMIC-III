@@ -31,7 +31,7 @@ import re
 import pickle
 import numpy as np
 from jiant.utils import retokenize
-from jiant.utils import moses_aligner
+# from jiant.utils import moses_aligner
 
 
 #############################################################

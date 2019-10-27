@@ -425,6 +425,7 @@ def _get_task(name, args, data_path, scratch_path):
         )
         task.load_data()
         utils.maybe_make_dir(os.path.dirname(pkl_path))
+        sys.setrecursionlimit(10000)
         pkl.dump(task, open(pkl_path, "wb"))
 
     return task
@@ -611,6 +612,7 @@ def add_pytorch_transformers_vocab(vocab, tokenizer_name):
             log.info("Time to delete vocab_size-1 in preprocess.py !!!")
     # due to a quirk in huggingface's file, the last token of RobertaTokenizer is None, remove
     # this when they fix the problem
+    vocab_size = len(tokenizer)
     ordered_vocab = ["[CLS]", "[SEP]", "[PAD]", "[UNK]"]
     if tokenizer_name != "scispacy":
         ordered_vocab = tokenizer.convert_ids_to_tokens(range(vocab_size))
