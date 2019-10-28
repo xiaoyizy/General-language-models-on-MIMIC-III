@@ -603,7 +603,7 @@ def add_pytorch_transformers_vocab(vocab, tokenizer_name):
         )
     # TODO: this is another place can be simplified by "model-before-preprocess" reorganization
     # we can pass tokenizer created in model here, see issue <TBD>
-
+    vocab_size = len(tokenizer)
     # do not use tokenizer.vocab_size, it does not include newly added token
     if tokenizer_name.startswith("roberta-"):
         if tokenizer.convert_ids_to_tokens(vocab_size - 1) is None:
@@ -612,7 +612,6 @@ def add_pytorch_transformers_vocab(vocab, tokenizer_name):
             log.info("Time to delete vocab_size-1 in preprocess.py !!!")
     # due to a quirk in huggingface's file, the last token of RobertaTokenizer is None, remove
     # this when they fix the problem
-    vocab_size = len(tokenizer)
     ordered_vocab = ["[CLS]", "[SEP]", "[PAD]", "[UNK]"]
     if tokenizer_name != "scispacy":
         ordered_vocab = tokenizer.convert_ids_to_tokens(range(vocab_size))

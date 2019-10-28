@@ -333,7 +333,6 @@ class SingleClassificationTask(ClassificationTask):
         return process_single_pair_task_split(
             split, indexers, model_preprocessing_interface, is_pair=False
         )
-<<<<<<< HEAD
 
 @register_task("icd_prediction_full", rel_path="mimic/")
 class MIMICICDPredictionFullTask(SingleClassificationTask):
@@ -407,9 +406,6 @@ class MIMICICDPredictionFullTask(SingleClassificationTask):
         self.labels = list(set(hey_train)) + list(set(hey_val)) + list(set(hey_test))
         log.info("\t Done with MIMIC")
 
-=======
-    
->>>>>>> c4088acd351364939f1a869376acebd34fa0a601
 @register_task("icd_prediction", rel_path="mimic/")
 class MIMICICDPredictionTask(SingleClassificationTask):
     def __init__(self, path, max_seq_len, name, **kw):  

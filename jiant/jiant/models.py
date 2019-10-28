@@ -880,7 +880,7 @@ class MultiTaskModel(nn.Module):
 
     def _single_sentence_forward(self, batch, task, predict):
         out = {}
-
+        batch["input1"]["roberta"] = batch["input1"]["roberta"].cuda()
         # embed the sentence
         word_embs_in_context, sent_mask = self.sent_encoder(batch["input1"], task)
         # pass to a task specific classifier
@@ -888,7 +888,7 @@ class MultiTaskModel(nn.Module):
         logits = classifier(word_embs_in_context, sent_mask)
         out["logits"] = logits
         out["n_exs"] = get_batch_size(batch, self._cuda_device)
-
+        batch["labels"] = batch["labels"].cuda()
         if "labels" in batch:  # means we should compute loss
             if batch["labels"].dim() == 0:
                 labels = batch["labels"].unsqueeze(0)
