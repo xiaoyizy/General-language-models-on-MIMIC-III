@@ -1,0 +1,3 @@
+[submodule "jiant_module"]
+	path = jiant_module
+	url = https://github.com/nyu-mll/jiant.git
