@@ -3,3 +3,4 @@ jiant/data/
 jiant/user_config_template.sh
 jiant/mimic/
 *csv
+*.ipynb_checkpoints
